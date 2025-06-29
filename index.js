@@ -3,6 +3,7 @@ const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } = require
 const axios = require('axios');
 
 const totalRFT = 2800;
+const translation = 0.2;
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
@@ -15,6 +16,9 @@ const commands = [
   new SlashCommandBuilder()
     .setName('rmd')
     .setDescription('Fetches RFT data from RMD (RFT MANUAL DATABASE).'),
+	new SlashCommandBuilder()
+	  .setName('archfiend-dice')
+		.setDescription('Rolls dice for 5 RFT'),
 	new SlashCommandBuilder()
 	  .setName('transfer-rft')
 		.setDescription("Transfers RFT")
@@ -61,10 +65,10 @@ client.on('interactionCreate', async interaction => {
       const data = res.data.record;
       let response = '📊 **RFT Balances**:\n';
       data.forEach((user) => {
-        response += `**${user.name}**: ${user.balance} RFT (₱${(user.balance * 0.2).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})\n`;
+        response += `**${user.name}**: ${user.balance} RFT (₱${(user.balance * translation).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})\n`;
       });
 			const total = data.reduce((sum, d) => sum + d.balance, 0);
-      response += `**Total**: ${total.toFixed(2)} / ${totalRFT} RFT`;
+      response += `**Total**: ${total.toFixed(2)} / ${totalRFT} RFT (1 RFT ≈ ₱${translation})`;
 			await interaction.reply(response);
     } catch (err) {
       console.error('Fetch error:', err.message);
@@ -72,7 +76,37 @@ client.on('interactionCreate', async interaction => {
     }
   } else if (interaction.commandName === 'transfer-rft') {
 		try {
-			await interaction.reply("Coming Soon maybe.");
+			await interaction.reply("Coming Soon maybe. :man_shrugging:");
+		} catch (err) {
+      console.error('Fetch error:', err.message);
+      await interaction.reply('❌ Could not fetch RFT data from JSONBin.');
+    } 
+	} else if (interaction.commandName === "archfiend-dice") {
+		try {
+      function biasedRoll() {
+        const outcomes = [1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5]; // 6 appears only once
+        const index = Math.floor(Math.random() * outcomes.length);
+        return outcomes[index];
+      }
+      
+      const num = biasedRoll();
+
+			let result = "";
+			switch (num) {
+				case 1: result = "🎲 You rolled: ⚀ You lost 5 RFT!";
+				  break;
+				case 2: result = "🎲 You rolled: ⚁ You lost 5 RFT!";
+				  break;
+				case 3: result = "🎲 You rolled: ⚂ You lost 5 RFT!";
+				  break;
+				case 4: result = "🎲 You rolled: ⚃ You lost 5 RFT!";
+				  break;
+				case 5: result = "🎲 You rolled: ⚄ You lost 5 RFT!";
+				  break;
+				case 6: result = "🎲 You rolled: ⚅ You won 30 RFT!";
+				  break;
+			}
+      await interaction.reply(`${result}`);
 		} catch (err) {
       console.error('Fetch error:', err.message);
       await interaction.reply('❌ Could not fetch RFT data from JSONBin.');
